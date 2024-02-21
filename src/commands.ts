@@ -61,8 +61,6 @@ async function next_cumple(
   ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>
 ) {
   var today = new Date();
-  var day = today.getDate();
-  var month = today.getMonth();
   var birthdays = await BirthdayRepo.find({
     order: {
       date: "ASC",
@@ -72,19 +70,38 @@ async function next_cumple(
   if (birthdays.length == 0) {
     return await ctx.reply("No hay ningun cumpleaños añadido");
   }
-  var nextBirthday = birthdays.find((birthday) => {
-    return birthday.date.getMonth() > month && birthday.date.getDate() > day;
-  });
+  var closestBirthday = birthdays[0];
+  var minDiff = Infinity;
 
-  // If not found nextBirthday, birthday is first of the next year
-  if (nextBirthday === undefined) {
-    nextBirthday = birthdays[0];
-  }
+  birthdays.forEach((birthday) => {
+    // Create a new date object for the birthday this year or next year
+    var nextBirthday = new Date(
+      today.getFullYear(),
+      birthday.date.getMonth(),
+      birthday.date.getDate()
+    );
+    if (nextBirthday < today) {
+      nextBirthday.setFullYear(today.getFullYear() + 1);
+    }
+
+    // Calculate the difference in days
+    var diff = Math.ceil(
+      (nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Update closestBirthday if this birthday is closer
+    if (diff < minDiff) {
+      closestBirthday = birthday;
+      minDiff = diff;
+    }
+  });
 
   return await ctx.reply(
     `El próximo cumpleaños es el de @${
-      nextBirthday.username
-    } el dia ${nextBirthday.date.getDate()}/${nextBirthday.date.getMonth() + 1}`
+      closestBirthday.username
+    } el dia ${closestBirthday.date.getDate()}/${
+      closestBirthday.date.getMonth() + 1
+    }`
   );
 }
 export function addBotCommands(bot: Telegraf) {
