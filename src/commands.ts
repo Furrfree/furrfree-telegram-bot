@@ -25,48 +25,48 @@ async function add_cumple(
     }
   );
   bot.on(message("reply_to_message"), async (ctx) => {
-    if (ctx.message.reply_to_message.message_id != test.message_id) return;
+    if (ctx.message.reply_to_message.message_id == test.message_id) {
+      const birthday = new Birthday();
 
-    const birthday = new Birthday();
+      if (!ctx.message.text.includes("/")) {
+        return await ctx.reply("Error: El mensaje no contiene una fecha", {
+          reply_to_message_id: ctx.message.message_id,
+        });
+      }
 
-    if (!ctx.message.text.includes("/")) {
-      return await ctx.reply("Error: El mensaje no contiene una fecha", {
+      // Create date from string with format dd/mm/yyyy
+      const message = ctx.message.text.split("/");
+      var date = new Date(
+        parseInt(message[2]),
+        parseInt(message[1]) - 1,
+        parseInt(message[0])
+      );
+      if (
+        date.toString() === "Invalid Date" ||
+        date.getDate() != parseInt(message[0]) ||
+        date.getMonth() + 1 != parseInt(message[1])
+      ) {
+        return await ctx.reply("Fecha no válida", {
+          reply_to_message_id: ctx.message.message_id,
+        });
+      }
+      birthday.date = date;
+      birthday.group = ctx.chat.id.toString();
+      birthday.userId = ctx.from.id.toString();
+      if (ctx.from.username === undefined) {
+        await ctx.reply("No tienes un username configurado", {
+          reply_to_message_id: ctx.message.message_id,
+        });
+        return;
+      }
+
+      birthday.username = ctx.from.username;
+      await BirthdayRepo.save(birthday);
+
+      await ctx.reply("Cumpleaños guardado", {
         reply_to_message_id: ctx.message.message_id,
       });
     }
-
-    // Create date from string with format dd/mm/yyyy
-    const message = ctx.message.text.split("/");
-    var date = new Date(
-      parseInt(message[2]),
-      parseInt(message[1]) - 1,
-      parseInt(message[0])
-    );
-    if (
-      date.toString() === "Invalid Date" ||
-      date.getDate() != parseInt(message[0]) ||
-      date.getMonth() + 1 != parseInt(message[1])
-    ) {
-      return await ctx.reply("Fecha no válida", {
-        reply_to_message_id: ctx.message.message_id,
-      });
-    }
-    birthday.date = date;
-    birthday.group = ctx.chat.id.toString();
-    birthday.userId = ctx.from.id.toString();
-    if (ctx.from.username === undefined) {
-      await ctx.reply("No tienes un username configurado", {
-        reply_to_message_id: ctx.message.message_id,
-      });
-      return;
-    }
-
-    birthday.username = ctx.from.username;
-    await BirthdayRepo.save(birthday);
-
-    await ctx.reply("Cumpleaños guardado", {
-      reply_to_message_id: ctx.message.message_id,
-    });
   });
 }
 
