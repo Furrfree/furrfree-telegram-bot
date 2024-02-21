@@ -1,5 +1,6 @@
 // botCommands.ts
 import { Context, Telegraf, type NarrowedContext } from "telegraf";
+import { message } from "telegraf/filters";
 import type { BotCommand, Message, Update } from "telegraf/types";
 import { Birthday } from "./entities";
 import { BirthdayRepo } from "./typeorm.config";
@@ -14,15 +15,20 @@ export const groupCommands: BotCommand[] = [
 ];
 
 async function add_cumple(
-  ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
+  context: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
   bot: Telegraf
 ) {
-  ctx.reply("Introduce tu cumpleaños en formato dd/mm/aaaa", {
-    reply_markup: {
-      force_reply: true,
-    },
-  });
-  bot.on("message", async (ctx) => {
+  var test = await context.reply(
+    "Introduce tu cumpleaños en formato dd/mm/aaaa",
+    {
+      reply_markup: {
+        force_reply: true,
+      },
+    }
+  );
+  bot.on(message("reply_to_message"), async (ctx) => {
+    if (ctx.message.reply_to_message.message_id != test.message_id) return;
+
     const birthday = new Birthday();
 
     // Create date from string with format dd/mm/yyyy
@@ -55,8 +61,6 @@ async function next_cumple(
   ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>
 ) {
   var today = new Date();
-  var day = today.getDate();
-  var month = today.getMonth();
   var birthdays = await BirthdayRepo.find({
     order: {
       date: "ASC",
@@ -66,19 +70,38 @@ async function next_cumple(
   if (birthdays.length == 0) {
     return await ctx.reply("No hay ningun cumpleaños añadido");
   }
-  var nextBirthday = birthdays.find((birthday) => {
-    return birthday.date.getMonth() > month && birthday.date.getDate() > day;
-  });
+  var closestBirthday = birthdays[0];
+  var minDiff = Infinity;
 
-  // If not found nextBirthday, birthday is first of the next year
-  if (nextBirthday === undefined) {
-    nextBirthday = birthdays[0];
-  }
+  birthdays.forEach((birthday) => {
+    // Create a new date object for the birthday this year or next year
+    var nextBirthday = new Date(
+      today.getFullYear(),
+      birthday.date.getMonth(),
+      birthday.date.getDate()
+    );
+    if (nextBirthday < today) {
+      nextBirthday.setFullYear(today.getFullYear() + 1);
+    }
+
+    // Calculate the difference in days
+    var diff = Math.ceil(
+      (nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Update closestBirthday if this birthday is closer
+    if (diff < minDiff) {
+      closestBirthday = birthday;
+      minDiff = diff;
+    }
+  });
 
   return await ctx.reply(
     `El próximo cumpleaños es el de @${
-      nextBirthday.username
-    } el dia ${nextBirthday.date.getDate()}/${nextBirthday.date.getMonth() + 1}`
+      closestBirthday.username
+    } el dia ${closestBirthday.date.getDate()}/${
+      closestBirthday.date.getMonth() + 1
+    }`
   );
 }
 export function addBotCommands(bot: Telegraf) {
