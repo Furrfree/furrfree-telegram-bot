@@ -1,3 +1,4 @@
+import cron from "node-cron";
 import "reflect-metadata";
 import { Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
@@ -20,11 +21,27 @@ const groupCommands: BotCommand[] = [
   },
 ];
 
+// Check birthdays every day at 00:00
+cron.schedule("0 0 * * *", async () => {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  await BirthdayRepo.find({
+    where: {
+      date: today,
+    },
+  }).then((birthdays) => {
+    birthdays.forEach((birthday) => {
+      bot.telegram.sendMessage(
+        birthday.group,
+        `¡Hoy es el cumpleaños de @${birthday.username}!`,
+        { parse_mode: "HTML" }
+      );
+    });
+  });
+});
+
 bot.start((ctx) => ctx.reply("Welcome"));
-bot.help((ctx) => ctx.reply("Send me a sticker"));
-bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
-bot.hears("hi", (ctx) => ctx.reply("Hey there"));
-bot.command("foo", (ctx) => ctx.reply("bar"));
+
 bot.command("add_cumple", (ctx) => {
   ctx.reply("Introduce tu cumpleaños en formato dd/mm/aaaa", {
     reply_markup: {
@@ -42,7 +59,13 @@ bot.command("add_cumple", (ctx) => {
       parseInt(date[0])
     );
     birthday.group = ctx.chat.id.toString();
-    birthday.user = ctx.from.id.toString();
+    birthday.userId = ctx.from.id.toString();
+    if (ctx.from.username === undefined) {
+      ctx.reply("No tienes un username configurado");
+      return;
+    }
+
+    birthday.username = ctx.from.username;
     console.log(birthday);
     await BirthdayRepo.save(birthday);
 

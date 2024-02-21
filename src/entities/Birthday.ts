@@ -1,16 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 
 @Entity()
 export class Birthday {
-  @PrimaryGeneratedColumn()
-  id: number;
-
   @Column()
   date: Date;
 
-  @Column()
+  @PrimaryColumn()
   group: string;
 
+  @PrimaryColumn()
+  userId: string;
+
   @Column()
-  user: string;
+  username: string;
 }
