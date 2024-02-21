@@ -1,5 +1,6 @@
 // botCommands.ts
 import { Context, Telegraf, type NarrowedContext } from "telegraf";
+import { message } from "telegraf/filters";
 import type { BotCommand, Message, Update } from "telegraf/types";
 import { Birthday } from "./entities";
 import { BirthdayRepo } from "./typeorm.config";
@@ -14,15 +15,20 @@ export const groupCommands: BotCommand[] = [
 ];
 
 async function add_cumple(
-  ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
+  context: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
   bot: Telegraf
 ) {
-  ctx.reply("Introduce tu cumpleaños en formato dd/mm/aaaa", {
-    reply_markup: {
-      force_reply: true,
-    },
-  });
-  bot.on("message", async (ctx) => {
+  var test = await context.reply(
+    "Introduce tu cumpleaños en formato dd/mm/aaaa",
+    {
+      reply_markup: {
+        force_reply: true,
+      },
+    }
+  );
+  bot.on(message("reply_to_message"), async (ctx) => {
+    if (ctx.message.reply_to_message.message_id != test.message_id) return;
+
     const birthday = new Birthday();
 
     // Create date from string with format dd/mm/yyyy
