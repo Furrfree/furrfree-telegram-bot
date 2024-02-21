@@ -19,12 +19,7 @@ async function add_cumple(
   bot: Telegraf
 ) {
   var test = await context.reply(
-    "Introduce tu cumpleaños en formato dd/mm/aaaa",
-    {
-      reply_markup: {
-        force_reply: true,
-      },
-    }
+    "Responde a este mensaje con tu cumpleaños en formato dd/mm/aaaa"
   );
   bot.on(message("reply_to_message"), async (ctx) => {
     if (ctx.message.reply_to_message.message_id != test.message_id) return;
