@@ -1,6 +1,6 @@
 version: "3"
 services:
-  furfree-db:
+  db:
     container_name: furfree-db
     image: mariadb:10.4
     volumes:
@@ -9,3 +9,11 @@ services:
     env_file: .env
     ports:
       - "3306:3306"
+
+  telegram-bot:
+    container_name: furfree-telegram-bot
+    build: .
+    restart: always
+    env_file: .env
+    depends_on:
+      - db

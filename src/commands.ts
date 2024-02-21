@@ -50,7 +50,11 @@ function add_cumple(
   });
 }
 export function addBotCommands(bot: Telegraf) {
+  // Add commands
   bot.command("add_cumple", (ctx) => add_cumple(ctx, bot));
+  bot.command("hi", (ctx) => ctx.reply("Hello"));
+
+  // Set commands list
   bot.telegram.setMyCommands(groupCommands, {
     scope: { type: "all_group_chats" },
   });
