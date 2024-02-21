@@ -10,9 +10,10 @@ export const groupCommands: BotCommand[] = [
     command: "add_cumple",
     description: "Pon tu cumple para ser notificado",
   },
+  { command: "next_cumple", description: "Ver siguiente cumpleaños" },
 ];
 
-function add_cumple(
+async function add_cumple(
   ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
   bot: Telegraf
 ) {
@@ -49,10 +50,42 @@ function add_cumple(
     ctx.reply("Cumpleaños guardado");
   });
 }
+
+async function next_cumple(
+  ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>
+) {
+  var today = new Date();
+  var day = today.getDate();
+  var month = today.getMonth();
+  var birthdays = await BirthdayRepo.find({
+    order: {
+      date: "ASC",
+    },
+  });
+
+  if (birthdays.length == 0) {
+    return await ctx.reply("No hay ningun cumpleaños añadido");
+  }
+  var nextBirthday = birthdays.find((birthday) => {
+    return birthday.date.getMonth() > month && birthday.date.getDate() > day;
+  });
+
+  // If not found nextBirthday, birthday is first of the next year
+  if (nextBirthday === undefined) {
+    nextBirthday = birthdays[0];
+  }
+
+  return await ctx.reply(
+    `El próximo cumpleaños es el de @${
+      nextBirthday.username
+    } el dia ${nextBirthday.date.getDate()}/${nextBirthday.date.getMonth() + 1}`
+  );
+}
 export function addBotCommands(bot: Telegraf) {
   // Add commands
-  bot.command("add_cumple", (ctx) => add_cumple(ctx, bot));
   bot.command("hi", (ctx) => ctx.reply("Hello"));
+  bot.command("add_cumple", (ctx) => add_cumple(ctx, bot));
+  bot.command("next_cumple", next_cumple);
 
   // Set commands list
   bot.telegram.setMyCommands(groupCommands, {
