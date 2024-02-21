@@ -1,0 +1,11 @@
+version: "3"
+services:
+  furfree-db:
+    container_name: furfree-db
+    image: mariadb:10.4
+    volumes:
+      - ./db_data:/var/lib/mysql
+    restart: always
+    env_file: .env
+    ports:
+      - "3306:3306"
