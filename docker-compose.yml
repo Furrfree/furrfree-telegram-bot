@@ -12,7 +12,7 @@ services:
 
   telegram-bot:
     container_name: furfree-telegram-bot
-    build: .
+    image: ghcr.io/tekofx/furfree-telegram-bot:latest
     restart: always
     env_file: .env
     depends_on:
