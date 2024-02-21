@@ -31,6 +31,12 @@ async function add_cumple(
 
     const birthday = new Birthday();
 
+    if (!ctx.message.text.includes("/")) {
+      return await ctx.reply("Error: El mensaje no contiene una fecha", {
+        reply_to_message_id: ctx.message.message_id,
+      });
+    }
+
     // Create date from string with format dd/mm/yyyy
     const message = ctx.message.text.split("/");
     var date = new Date(
@@ -38,11 +44,14 @@ async function add_cumple(
       parseInt(message[1]) - 1,
       parseInt(message[0])
     );
-    if (date.toString() === "Invalid Date") {
-      await ctx.reply("Fecha no válida", {
+    if (
+      date.toString() === "Invalid Date" ||
+      date.getDate() != parseInt(message[0]) ||
+      date.getMonth() + 1 != parseInt(message[1])
+    ) {
+      return await ctx.reply("Fecha no válida", {
         reply_to_message_id: ctx.message.message_id,
       });
-      return;
     }
     birthday.date = date;
     birthday.group = ctx.chat.id.toString();
