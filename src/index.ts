@@ -1,24 +1,19 @@
 import "reflect-metadata";
 import { Telegraf } from "telegraf";
-import { message } from "telegraf/filters";
+import { addBotCommands } from "./commands";
 import { config } from "./config";
-
+import { addCronJobs } from "./schedules";
+import { AppDataSource } from "./typeorm.config";
+AppDataSource.initialize()
+  .then(() => {
+    // here you can start to work with your database
+  })
+  .catch((error) => console.log(error));
 const bot = new Telegraf(config.BOT_TOKEN);
 
-const commands = [{ command: "hi", description: "hello" }];
-const groupCommands = [{ command: "foo", description: "bar" }];
-
 bot.start((ctx) => ctx.reply("Welcome"));
-bot.help((ctx) => ctx.reply("Send me a sticker"));
-bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
-bot.hears("hi", (ctx) => ctx.reply("Hey there"));
-bot.command("foo", (ctx) => ctx.reply("bar"));
-
-// Set the bot's commands so that the user can see them in the chat
-bot.telegram.setMyCommands(groupCommands, {
-  scope: { type: "all_group_chats" },
-});
-bot.telegram.setMyCommands(commands);
+addBotCommands(bot);
+addCronJobs(bot);
 
 bot.launch();
 console.log("Bot started");
