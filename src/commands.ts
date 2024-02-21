@@ -39,21 +39,27 @@ async function add_cumple(
       parseInt(message[0])
     );
     if (date.toString() === "Invalid Date") {
-      ctx.reply("Fecha no válida");
+      await ctx.reply("Fecha no válida", {
+        reply_to_message_id: ctx.message.message_id,
+      });
       return;
     }
     birthday.date = date;
     birthday.group = ctx.chat.id.toString();
     birthday.userId = ctx.from.id.toString();
     if (ctx.from.username === undefined) {
-      ctx.reply("No tienes un username configurado");
+      await ctx.reply("No tienes un username configurado", {
+        reply_to_message_id: ctx.message.message_id,
+      });
       return;
     }
 
     birthday.username = ctx.from.username;
     await BirthdayRepo.save(birthday);
 
-    ctx.reply("Cumpleaños guardado");
+    await ctx.reply("Cumpleaños guardado", {
+      reply_to_message_id: ctx.message.message_id,
+    });
   });
 }
 
