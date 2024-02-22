@@ -155,9 +155,7 @@ async function next_cumple(
 ) {
   var today = new Date();
   var birthdays = await BirthdayRepo.find({
-    order: {
-      date: "ASC",
-    },
+    where: { group: ctx.chat.id.toString() },
   });
 
   if (birthdays.length == 0) {
