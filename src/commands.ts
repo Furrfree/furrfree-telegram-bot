@@ -14,18 +14,90 @@ export const groupCommands: BotCommand[] = [
   { command: "next_cumple", description: "Ver siguiente cumpleaños" },
 ];
 
+interface WaitingResponse {
+  chatId: string;
+  userId: string;
+  messageId: string;
+  command: string;
+}
+
+var waitingResponses: WaitingResponse[] = [];
+
+function addWaitingResponse(response: WaitingResponse) {
+  waitingResponses.push(response);
+}
+
+function removeWaitingResponse(
+  chatId: string,
+  userId: string,
+  command: string
+) {
+  waitingResponses = waitingResponses.filter(
+    (response) =>
+      response.chatId !== chatId ||
+      response.userId !== userId ||
+      response.command !== command
+  );
+}
+
+function getWaitingResponse(
+  chatId: string,
+  userId: string,
+  command: string
+): WaitingResponse | undefined {
+  return waitingResponses.find(
+    (response) =>
+      response.chatId === chatId &&
+      response.userId === userId &&
+      response.command === command
+  );
+}
+
 async function add_cumple(
   context: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
   bot: Telegraf
 ) {
-  var test = await context.reply(
+  var previousWaitingResponse = getWaitingResponse(
+    context.chat.id.toString(),
+    context.from.id.toString(),
+    "add_cumple"
+  );
+
+  if (previousWaitingResponse !== undefined) {
+    const chatId = context.chat.id.toString().replace("-100", "");
+    const link = `https://t.me/c/${chatId}/${previousWaitingResponse.messageId}`;
+    return await context.reply(
+      `Ya estas añadiendo un cumpleaños, responde al [mensaje anterior](${link}) para añadir tu cumpleaños`,
+      {
+        parse_mode: "Markdown",
+        reply_to_message_id: context.message.message_id,
+      }
+    );
+  }
+
+  var botMessage = await context.reply(
     "Responde a este mensaje con tu cumpleaños en formato dd/mm/aaaa",
     {
       reply_to_message_id: context.message.message_id,
     }
   );
+  waitingResponses.push({
+    chatId: context.chat.id.toString(),
+    userId: context.from.id.toString(),
+    messageId: botMessage.message_id.toString(),
+    command: "add_cumple",
+  });
   bot.on(message("reply_to_message"), async (ctx) => {
-    if (ctx.message.reply_to_message.message_id == test.message_id) {
+    const waitingResponse = getWaitingResponse(
+      ctx.chat.id.toString(),
+      ctx.from.id.toString(),
+      "add_cumple"
+    );
+
+    if (
+      waitingResponse !== undefined &&
+      ctx.message.reply_to_message !== undefined
+    ) {
       const birthday = new Birthday();
 
       if (!ctx.message.text.includes("/")) {
@@ -54,9 +126,12 @@ async function add_cumple(
       birthday.group = ctx.chat.id.toString();
       birthday.userId = ctx.from.id.toString();
       if (ctx.from.username === undefined) {
-        await ctx.reply("No tienes un username configurado", {
-          reply_to_message_id: ctx.message.message_id,
-        });
+        await ctx.reply(
+          "No tienes un username configurado. Establece uno para poder usar esta funcion",
+          {
+            reply_to_message_id: ctx.message.message_id,
+          }
+        );
         return;
       }
 
@@ -66,6 +141,11 @@ async function add_cumple(
       await ctx.reply("Cumpleaños guardado", {
         reply_to_message_id: ctx.message.message_id,
       });
+      removeWaitingResponse(
+        ctx.chat.id.toString(),
+        ctx.from.id.toString(),
+        "add_cumple"
+      );
     }
   });
 }
