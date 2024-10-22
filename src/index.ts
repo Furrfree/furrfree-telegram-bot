@@ -18,11 +18,21 @@ addBotCommands(bot);
 addCronJobs(bot);
 
 
-function onNewMember(ctx: Context) {
+async function onNewMember(ctx: Context) {
   const newMembers = ctx.message.new_chat_members;
 
   if (!newMembers) {
     return;
+  }
+
+
+  // Removed join message
+  try{
+  await ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
+  	
+  }catch (e:any){
+  	
+  	console.log("Error deleting join message. Check bot is admin")
   }
   newMembers.forEach((member:any) => {
     ctx.reply(
@@ -48,6 +58,9 @@ bot.on(message("new_chat_members"), (ctx) => {
     onNewMember(ctx);
   }
 });
+
+
+// TODO: Implement handler to remove User removed from group
 
 
 bot.launch();
