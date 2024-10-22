@@ -14,7 +14,7 @@
     "node-cron": "^3.0.3",
     "reflect-metadata": "^0.2.1",
     "sqlite3": "^5.1.7",
-    "telegraf": "^4.15.3",
+    "telegraf": "4.15.3",
     "typeorm": "^0.3.20"
   }
 }
