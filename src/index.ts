@@ -42,10 +42,15 @@ async function onNewMember(ctx: Context) {
 
     for (const member of newMembers) {
 
-        logger.info(`Joined user ${member.username}`)
+        let mention = `@${member.username}`;
+        if (member.username == undefined) {
+            mention = `[${member.first_name}](tg://user?id=${member.id})`
+        }
+
+        logger.info(`Joined user ${member.username || member.first_name}`)
         try {
             await ctx.reply(
-                `¡Bienvenido, @${member.username || member.first_name}!\n\n` +
+                `¡Bienvenido, ${mention}!\n\n` +
                 `PARA ENTRAR:\n` +
                 `\t· Leer las [normas](${config.RULES_MESSAGE}) (y estar de acuerdo con ellas)\n` +
                 `\t· Ser mayor de edad: por las nuevas políticas de Telegram no podemos aceptar a personas menores de 18 años.\n` +
@@ -117,9 +122,8 @@ bot.use(async (ctx: Context, next) => {
 });
 
 
-bot.launch().then(r =>
-    logger.debug('Bot started')
-);
+bot.launch();
+logger.debug('Bot started')
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
