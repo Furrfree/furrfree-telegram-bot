@@ -6,6 +6,7 @@ import {config} from "./config";
 import {addCronJobs} from "./schedules";
 import {AppDataSource} from "./typeorm.config";
 import {logger} from "./logger.ts";
+import type {Message, Update} from "telegraf/types";
 
 AppDataSource.initialize()
     .then(() => {
@@ -14,35 +15,36 @@ AppDataSource.initialize()
     .catch((error) => logger.debug(error));
 const bot = new Telegraf(config.BOT_TOKEN);
 
-bot.start((ctx) => ctx.reply("Welcome"));
 addBotCommands(bot);
 addCronJobs(bot);
 
+function isNewChatMembersMessage(message: Message | undefined): message is Message.NewChatMembersMessage {
+    return (message as Message.NewChatMembersMessage).new_chat_members !== undefined;
+}
+
+function isLeftChatMembersMessage(message: Message | undefined): message is Message.LeftChatMemberMessage {
+    return (message as Message.LeftChatMemberMessage).left_chat_member !== undefined;
+}
 
 async function onNewMember(ctx: Context) {
 
-    if (ctx.message == null) {
+    const message: (Update.New & Update.NonChannel & Message.NewChatMembersMessage) | undefined = isNewChatMembersMessage(ctx.message) ? ctx.message : undefined
+    if (message == undefined) {
+        logger.error("Message is undefined")
         return;
     }
 
-
-    const newMembers = ctx.message?.new_chat_members;
+    const newMembers = message.new_chat_members
 
     if (!newMembers) {
         return;
     }
 
-    // Remove join message
-    try {
-        await ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-    } catch (e: any) {
-        logger.error(`Error deleting join message. Check bot is admin, ${e}`)
-    }
+    for (const member of newMembers) {
 
-    try {
-
-        newMembers.forEach((member: any) => {
-            ctx.reply(
+        logger.info(`Joined user ${member.username}`)
+        try {
+            await ctx.reply(
                 `¡Bienvenido, @${member.username || member.first_name}!\n\n` +
                 `PARA ENTRAR:\n` +
                 `\t· Leer las [normas](${config.RULES_MESSAGE}) (y estar de acuerdo con ellas)\n` +
@@ -56,26 +58,41 @@ async function onNewMember(ctx: Context) {
                     parse_mode: 'Markdown',
                     disable_web_page_preview: true,
                 });
-        });
+        } catch (e: any) {
+            logger.error(`Error sending join message: ${e}`)
+        }
+    }
+
+    // Remove join message
+    try {
+        await ctx.telegram.deleteMessage(message.chat.id, message.message_id);
+    } catch (e: any) {
+        logger.error(`Error deleting join message. Check bot is admin, ${e}`)
+    }
+}
+
+async function onMemberDelete(ctx: Context) {
+
+    const message: (Update.New & Update.NonChannel & Message.LeftChatMemberMessage) | undefined = isLeftChatMembersMessage(ctx.message) ? ctx.message : undefined
+
+    if (message == undefined) {
+        logger.error("Message is undefined")
+        return;
+    }
+
+    logger.info(`User ${message.left_chat_member.username} leave`)
+
+    try {
+        await ctx.telegram.deleteMessage(message.chat.id, message.message_id);
+
     } catch (e: any) {
         logger.error(`Error deleting join message. ${e}`)
     }
 }
 
-async function onMemberDelete(ctx: Context) {
-    if (ctx.message == null) {
-        return;
-    }
-    try {
-        await ctx.telegram.deleteMessage(ctx.message.chat.id, ctx.message.message_id);
-    } catch (e: any) {
-        logger.error("Error deleting join message. Check bot is admin")
-    }
-
-
-}
-
 bot.on(message("new_chat_members"), async (ctx) => {
+    console.log(typeof ctx)
+
     if (ctx.chat.id === config.ADMISSION_GROUP_ID) {
         await onNewMember(ctx);
     }
@@ -93,7 +110,7 @@ bot.use(async (ctx: Context, next) => {
         await next();
     } catch (err) {
         if (err instanceof TelegramError) {
-            logger.error(`Telegram error: ${err.code} - ${err.description}`); // Aquí puedes manejar errores específicos de Telegram, como cuando el bot es bloqueado
+            logger.error(`Telegram error: ${err.code} - ${err.description}`);
         } else {
             logger.error(`Unexpected error: ${err}`);
         }
@@ -101,8 +118,9 @@ bot.use(async (ctx: Context, next) => {
 });
 
 
-bot.launch();
-logger.debug('Bot started');
+bot.launch().then(r =>
+    logger.debug('Bot started')
+);
 
 // Enable graceful stop
 process.once("SIGINT", () => bot.stop("SIGINT"));
