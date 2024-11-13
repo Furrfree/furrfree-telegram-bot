@@ -91,7 +91,6 @@ async function onMemberDelete(ctx: Context) {
 }
 
 bot.on(message("new_chat_members"), async (ctx) => {
-    console.log(typeof ctx)
 
     if (ctx.chat.id === config.ADMISSION_GROUP_ID) {
         await onNewMember(ctx);
