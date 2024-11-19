@@ -16,7 +16,7 @@ AppDataSource.initialize()
 const bot = new Telegraf(config.BOT_TOKEN);
 
 addBotCommands(bot);
-addCronJobs(bot);
+//addCronJobs(bot);
 
 function isNewChatMembersMessage(message: Message | undefined): message is Message.NewChatMembersMessage {
     return (message as Message.NewChatMembersMessage).new_chat_members !== undefined;
