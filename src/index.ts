@@ -50,7 +50,7 @@ async function onNewMember(ctx: Context) {
         logger.info(`Joined user ${member.username || member.first_name}`)
         try {
             await ctx.reply(
-                `¡Bienvenido, ${mention}!\n\n` +
+                `¡Bienvenido/a, ${mention}!\n\n` +
                 `PARA ENTRAR:\n` +
                 `\t· Leer las [normas](${config.RULES_MESSAGE}) (y estar de acuerdo con ellas)\n` +
                 `\t· Ser mayor de edad: por las nuevas políticas de Telegram no podemos aceptar a personas menores de 18 años.\n` +
