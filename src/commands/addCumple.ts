@@ -31,7 +31,7 @@ export default async function add_cumple(
         );
     }
 
-    var botMessage = await context.reply(
+    const botMessage = await context.reply(
         "Responde a este mensaje con tu cumpleaños en formato dd/mm/aaaa",
         {
             reply_to_message_id: context.message.message_id,
@@ -54,7 +54,6 @@ export default async function add_cumple(
             waitingResponse !== undefined &&
             ctx.message.reply_to_message !== undefined
         ) {
-            const birthday = new Birthday();
 
             // @ts-ignore
             if (!ctx.message.text.includes("/")) {
@@ -80,9 +79,6 @@ export default async function add_cumple(
                     reply_to_message_id: ctx.message.message_id,
                 });
             }
-            birthday.date = date;
-            birthday.groupId = ctx.chat.id;
-            birthday.userId = ctx.from.id;
             if (ctx.from.username === undefined) {
                 await ctx.reply(
                     "No tienes un username configurado. Establece uno para poder usar esta funcion",
@@ -93,9 +89,13 @@ export default async function add_cumple(
                 return;
             }
 
-            birthday.username = ctx.from.username;
+            const birthday = BirthdayRepo.create({
+                date: date,
+                groupId: ctx.chat.id,
+                userId: ctx.from.id,
+                username: ctx.from.username,
+            })
             await BirthdayRepo.save(birthday);
-
             await ctx.reply("Cumpleaños guardado", {
                 reply_to_message_id: ctx.message.message_id,
             });
