@@ -1,7 +1,7 @@
 import {Context, type NarrowedContext} from "telegraf";
 import type {Message, Update} from "telegraf/types";
-import {BirthdayRepo} from "../typeorm.config.ts";
 import {Birthday} from "../entities";
+import {BirthdayRepo} from "../repositories";
 
 export default async function next_cumple(
     ctx: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>

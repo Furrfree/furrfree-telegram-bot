@@ -6,8 +6,8 @@ import {config} from "./config";
 import {AppDataSource} from "./typeorm.config";
 import {logger} from "./logger.ts";
 import type {Message, Update} from "telegraf/types";
+import {NewUserRepo} from "./repositories";
 
-import {NewUserRepo} from "./typeorm.config.ts";
 
 AppDataSource.initialize()
     .then(() => {

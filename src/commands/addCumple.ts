@@ -2,8 +2,9 @@ import {Context, type NarrowedContext, Telegraf} from "telegraf";
 import type {Message, Update} from "telegraf/types";
 import {message} from "telegraf/filters";
 import {Birthday} from "../entities";
-import {BirthdayRepo} from "../typeorm.config.ts";
+
 import type WaitingResponse from "../interfaces/WaitingResponse.ts";
+import {BirthdayRepo} from "../repositories";
 
 let waitingResponses: WaitingResponse[] = [];
 

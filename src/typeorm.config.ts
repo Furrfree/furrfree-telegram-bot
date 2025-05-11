@@ -2,6 +2,7 @@ import { DataSource } from "typeorm";
 import { config } from "./config";
 import { Birthday } from "./entities";
 import {NewUser} from "./entities/NewUser.ts";
+import {BlacklistedUser} from "./entities/BlacklistedUser.ts";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -10,10 +11,7 @@ export const AppDataSource = new DataSource({
   username: config.MYSQL_USER,
   password: config.MYSQL_PASSWORD,
   database: config.MYSQL_DATABASE,
-  entities: [Birthday, NewUser],
+  entities: [Birthday, NewUser, BlacklistedUser],
   synchronize: true,
   logging: false,
 });
-
-export const BirthdayRepo = AppDataSource.manager.getRepository(Birthday);
-export const NewUserRepo = AppDataSource.manager.getRepository(NewUser);
