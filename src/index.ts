@@ -5,119 +5,26 @@ import {addBotCommands} from "./commands";
 import {config} from "./config";
 import {AppDataSource} from "./typeorm.config";
 import {logger} from "./logger.ts";
-import type {Message, Update} from "telegraf/types";
-import {NewUserRepo} from "./repositories";
+import {onMemberDelete, onNewMember} from "./updates";
+import {errorMiddleware} from "./middleware";
 
 
 AppDataSource.initialize()
     .then(() => {
         // here you can start to work with your database
+        logger.debug("Data Source has been initialized!");
     })
     .catch((error) => logger.debug(error));
 const bot = new Telegraf(config.BOT_TOKEN);
 
-addBotCommands(bot);
+addBotCommands(bot).then(r => {
+    logger.debug("Commands added");
+});
 
 //addCronJobs(bot);
 
-function isNewChatMembersMessage(message: Message | undefined): message is Message.NewChatMembersMessage {
-    return (message as Message.NewChatMembersMessage).new_chat_members !== undefined;
-}
-
-function isLeftChatMembersMessage(message: Message | undefined): message is Message.LeftChatMemberMessage {
-    return (message as Message.LeftChatMemberMessage).left_chat_member !== undefined;
-}
-
-async function onNewMember(ctx: Context) {
-
-    const message: (Update.New & Update.NonChannel & Message.NewChatMembersMessage) | undefined = isNewChatMembersMessage(ctx.message) ? ctx.message : undefined
-    if (message == undefined) {
-        logger.error("Message is undefined")
-        return;
-    }
-
-    const newMembers = message.new_chat_members
-
-    if (!newMembers) {
-        return;
-    }
-
-    for (const member of newMembers) {
-
-        let mention = `@${member.username}`;
-        if (member.username == undefined) {
-            mention = `[${member.first_name}](tg://user?id=${member.id})`
-        }
-
-
-        logger.info(`Joined user ${member.username || member.first_name}`)
-        try {
-            const welcomeMessage = await ctx.reply(
-                `¡Bienvenido/a, ${mention}!\n\n` +
-                `PARA ENTRAR:\n` +
-                `\t· Leer las [normas](${config.RULES_MESSAGE}) (y estar de acuerdo con ellas)\n` +
-                `\t· Ser mayor de edad: por las nuevas políticas de Telegram no podemos aceptar a personas menores de 18 años.\n` +
-                `\t· Presentarse: edad (obligatorio) de donde venís, pronombres, nombres etc. Podéis usar esta [plantilla](${config.PRESENTATION_TEMPLATE_MESSAGE})\n` +
-                `\t· Breve descripción y con qué podrías aportar (arte, quedadas, etc) (opcional)\n` +
-                `Una vez os leamos seréis admitidos y entraréis en el grupo. Cuando entréis abandonad el grupo de admisión, por favor. Un saludo! 💜🐺`
-                ,
-
-                {
-                    parse_mode: 'Markdown',
-                    disable_web_page_preview: true,
-                });
-
-
-            await NewUserRepo.save({
-                userId: member.id,
-                welcomeMessageId: welcomeMessage.message_id,
-            })
-        } catch (e: any) {
-            logger.error(`Error sending join message: ${e}`)
-        }
-    }
-
-    // Remove join message
-    try {
-        await ctx.telegram.deleteMessage(message.chat.id, message.message_id);
-    } catch (e: any) {
-        logger.error(`Error deleting join message. Check bot is admin, ${e}`)
-    }
-}
-
-async function onMemberDelete(ctx: Context) {
-
-    const message: (Update.New & Update.NonChannel & Message.LeftChatMemberMessage) | undefined = isLeftChatMembersMessage(ctx.message) ? ctx.message : undefined
-
-    if (message == undefined) {
-        logger.error("Message is undefined")
-        return;
-    }
-
-    logger.info(`User ${message.left_chat_member.username} leave`)
-
-    try {
-        const user = await NewUserRepo.findOneBy({
-            userId: message.left_chat_member.id,
-        })
-
-        await ctx.telegram.deleteMessage(message.chat.id, message.message_id);
-        if (user) {
-            await ctx.telegram.deleteMessage(message.chat.id, user.welcomeMessageId);
-            await NewUserRepo.delete({
-                userId: message.left_chat_member.id,
-            })
-        }
-
-    } catch (e: any) {
-        logger.error(`Error deleting join message. ${e}`)
-    }
-}
-
 bot.on(message("new_chat_members"), async (ctx) => {
-
-    console.log(ctx.chat.id)
-    console.log(config.ADMISSION_GROUP_ID)
+    logger.info(`User ${ctx.message.new_chat_members[0].username} joined`);
 
     if (ctx.chat.id === config.ADMISSION_GROUP_ID) {
         await onNewMember(ctx);
@@ -125,24 +32,14 @@ bot.on(message("new_chat_members"), async (ctx) => {
 });
 
 bot.on(message("left_chat_member"), async (ctx) => {
+    logger.info(`User ${ctx.message.left_chat_member.username} left`);
     if (ctx.chat.id === config.ADMISSION_GROUP_ID) {
         await onMemberDelete(ctx);
     }
 })
 
 // Middleware
-bot.use(async (ctx: Context, next) => {
-    try {
-        await next();
-    } catch (err) {
-        if (err instanceof TelegramError) {
-            logger.error(`Telegram error: ${err.code} - ${err.description}`);
-        } else {
-            logger.error(`Unexpected error: ${err}`);
-        }
-    }
-});
-
+bot.use(errorMiddleware());
 
 bot.launch();
 logger.debug('Bot started')
