@@ -1,11 +1,7 @@
-// botCommands.ts
-import {Context, Telegraf, type NarrowedContext} from "telegraf";
-import {message} from "telegraf/filters";
-import type {BotCommand, Message, Update} from "telegraf/types";
-import {Birthday} from "./entities";
-import {BirthdayRepo} from "./typeorm.config";
-import add_cumple from "./commands/addCumple.ts";
-import next_cumple from "./commands/nextCumple.ts";
+import type {BotCommand} from "telegraf/types";
+import {Telegraf} from "telegraf";
+import add_cumple from "./addCumple.ts";
+import next_cumple from "./nextCumple.ts";
 
 export const commands: BotCommand[] = [{command: "hi", description: "hello"}];
 export const groupCommands: BotCommand[] = [
@@ -18,7 +14,6 @@ export const groupCommands: BotCommand[] = [
         description: "Ver siguiente cumpleaños"
     },
 ];
-
 
 export async function addBotCommands(bot: Telegraf) {
     // Add commands

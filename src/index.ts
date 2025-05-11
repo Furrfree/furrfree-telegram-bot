@@ -3,7 +3,6 @@ import {Context, Telegraf, TelegramError} from "telegraf";
 import {message} from "telegraf/filters";
 import {addBotCommands} from "./commands";
 import {config} from "./config";
-import {addCronJobs} from "./schedules";
 import {AppDataSource} from "./typeorm.config";
 import {logger} from "./logger.ts";
 import type {Message, Update} from "telegraf/types";
