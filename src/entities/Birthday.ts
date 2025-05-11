@@ -14,7 +14,7 @@ export class Birthday {
   date: Date;
 
   @PrimaryColumn({type:"bigint"})
-  group: number;
+  groupId: number;
 
 
   @Column()

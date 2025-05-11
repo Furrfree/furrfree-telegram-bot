@@ -13,7 +13,7 @@ async function checkBirthdays(bot: Telegraf) {
   }).then((birthdays) => {
     birthdays.forEach((birthday) => {
       bot.telegram.sendMessage(
-        birthday.group,
+        birthday.groupId,
         `¡Hoy es el cumpleaños de @${birthday.username}!`,
         { parse_mode: "HTML" }
       );

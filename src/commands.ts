@@ -126,7 +126,7 @@ async function add_cumple(
                 });
             }
             birthday.date = date;
-            birthday.group = ctx.chat.id;
+            birthday.groupId = ctx.chat.id;
             birthday.userId = ctx.from.id;
             if (ctx.from.username === undefined) {
                 await ctx.reply(
@@ -159,7 +159,7 @@ async function next_cumple(
 ) {
     var today = new Date();
     var birthdays = await BirthdayRepo.find({
-        where: {group: ctx.chat.id},
+        where: {groupId: ctx.chat.id},
     });
 
     if (birthdays.length == 0) {
