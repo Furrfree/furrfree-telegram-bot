@@ -1,15 +1,20 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import {Column, Entity, PrimaryColumn, type ValueTransformer} from "typeorm";
+
+const dateTransformer: ValueTransformer = {
+  to: (value: Date) => value, // Save as is
+  from: (value: string) => new Date(value), // Convert string to Date
+};
 
 @Entity()
 export class Birthday {
-  @PrimaryColumn()
-  userId: string;
+  @PrimaryColumn({type:"bigint"})
+  userId: number;
 
-  @Column()
+  @Column({type:"date", transformer: dateTransformer})
   date: Date;
 
-  @PrimaryColumn()
-  group: string;
+  @PrimaryColumn({type:"bigint"})
+  group: number;
 
 
   @Column()
