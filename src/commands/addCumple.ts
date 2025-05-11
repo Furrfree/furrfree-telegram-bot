@@ -12,7 +12,7 @@ export default async function add_cumple(
     context: NarrowedContext<Context<Update>, Update.MessageUpdate<Message>>,
     bot: Telegraf
 ) {
-    var previousWaitingResponse = getWaitingResponse(
+    const previousWaitingResponse = getWaitingResponse(
         context.chat.id.toString(),
         context.from.id.toString(),
         "add_cumple"
@@ -65,7 +65,7 @@ export default async function add_cumple(
             // Create date from string with format dd/mm/yyyy
             // @ts-ignore
             const message = ctx.message.text.split("/");
-            var date = new Date(
+            const date = new Date(
                 parseInt(message[2]),
                 parseInt(message[1]) - 1,
                 parseInt(message[0])
