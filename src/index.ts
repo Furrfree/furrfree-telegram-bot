@@ -8,6 +8,8 @@ import {AppDataSource} from "./typeorm.config";
 import {logger} from "./logger.ts";
 import type {Message, Update} from "telegraf/types";
 
+import {NewUserRepo} from "./typeorm.config.ts";
+
 AppDataSource.initialize()
     .then(() => {
         // here you can start to work with your database
@@ -16,6 +18,7 @@ AppDataSource.initialize()
 const bot = new Telegraf(config.BOT_TOKEN);
 
 addBotCommands(bot);
+
 //addCronJobs(bot);
 
 function isNewChatMembersMessage(message: Message | undefined): message is Message.NewChatMembersMessage {
@@ -47,9 +50,10 @@ async function onNewMember(ctx: Context) {
             mention = `[${member.first_name}](tg://user?id=${member.id})`
         }
 
+
         logger.info(`Joined user ${member.username || member.first_name}`)
         try {
-            await ctx.reply(
+            const welcomeMessage = await ctx.reply(
                 `¡Bienvenido/a, ${mention}!\n\n` +
                 `PARA ENTRAR:\n` +
                 `\t· Leer las [normas](${config.RULES_MESSAGE}) (y estar de acuerdo con ellas)\n` +
@@ -63,6 +67,12 @@ async function onNewMember(ctx: Context) {
                     parse_mode: 'Markdown',
                     disable_web_page_preview: true,
                 });
+
+
+            await NewUserRepo.save({
+                userId: member.id,
+                welcomeMessageId: welcomeMessage.message_id,
+            })
         } catch (e: any) {
             logger.error(`Error sending join message: ${e}`)
         }
@@ -88,7 +98,17 @@ async function onMemberDelete(ctx: Context) {
     logger.info(`User ${message.left_chat_member.username} leave`)
 
     try {
+        const user = await NewUserRepo.findOneBy({
+            userId: message.left_chat_member.id,
+        })
+
         await ctx.telegram.deleteMessage(message.chat.id, message.message_id);
+        if (user) {
+            await ctx.telegram.deleteMessage(message.chat.id, user.welcomeMessageId);
+            await NewUserRepo.delete({
+                userId: message.left_chat_member.id,
+            })
+        }
 
     } catch (e: any) {
         logger.error(`Error deleting join message. ${e}`)
@@ -96,6 +116,9 @@ async function onMemberDelete(ctx: Context) {
 }
 
 bot.on(message("new_chat_members"), async (ctx) => {
+
+    console.log(ctx.chat.id)
+    console.log(config.ADMISSION_GROUP_ID)
 
     if (ctx.chat.id === config.ADMISSION_GROUP_ID) {
         await onNewMember(ctx);
