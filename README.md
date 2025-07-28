@@ -1,15 +1,5 @@
-# furfree-telegram-bot
+# Furrfree Telegram Bot
 
-To install dependencies:
 
-```bash
-bun install
-```
 
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.0.28. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+> :warning: **This project has been moved**: [Link to new repo](https://github.com/Furrfree/telegram-bot-go)
